@@ -1,0 +1,112 @@
+using System;
+using System.Collections.Generic;
+
+namespace EmployeeTimeLogSystem
+{
+    [cite_start]// Abstract class for mathematical computations regarding time [cite: 6]
+    public abstract class TimeCalculator
+    {
+        public abstract double CalculateHours(DateTime start, DateTime end);
+    }
+
+    [cite_start]// Encapsulated class handling the specific logic for work hours 
+    public class WorkSessionCalculator : TimeCalculator
+    {
+        public override double CalculateHours(DateTime start, DateTime end)
+        {
+            TimeSpan duration = end - start;
+            return duration.TotalHours;
+        }
+
+        public string GetTimeNote(double totalHours, out string hoursDetail)
+        {
+            const int StandardHours = 9; // [cite: 29]
+            if (totalHours == StandardHours)
+            {
+                hoursDetail = "";
+                return "";
+            }
+            else if (totalHours < StandardHours)
+            {
+                double remaining = StandardHours - totalHours;
+                hoursDetail = $"Hours left: {remaining:F2} hours"; // [cite: 33]
+                return "Early Out"; // [cite: 30, 32]
+            }
+            else
+            {
+                double extra = totalHours - StandardHours;
+                hoursDetail = $"Hours extended: {extra:F2} hours"; // [cite: 37]
+                return "Overtime"; // [cite: 34, 36]
+            }
+        }
+    }
+
+    class Program
+    {
+        [cite_start]// Dictionary to store logs as required 
+        static Dictionary<string, object> employeeRecord = new Dictionary<string, object>();
+
+        static void Main(string[] args)
+        {
+            WorkSessionCalculator calculator = new WorkSessionCalculator();
+
+            [cite_start]// 1. Input Employee Number [cite: 11, 40]
+            Console.Write("Employee Number: ");
+            string empNumber = Console.ReadLine();
+
+            [cite_start]// 2. Input Office Location [cite: 12, 42]
+            Console.WriteLine("Which office are you located? (Philippines, United States, India)");
+            string location = Console.ReadLine();
+
+            [cite_start]// 3. Handle Time Zone Conversion [cite: 7, 13]
+            TimeZoneInfo targetZone;
+            switch (location.ToLower())
+            {
+                case "philippines":
+                    targetZone = TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time");
+                    break;
+                case "united states":
+                    targetZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+                    break;
+                case "india":
+                    targetZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+                    break;
+                default:
+                    Console.WriteLine("Invalid Location.");
+                    return;
+            }
+
+            DateTime localTimeIn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, targetZone); // [cite: 13, 14]
+
+            [cite_start]// Display Time-In Output [cite: 39, 43]
+            Console.WriteLine("\nYou clocked in at:");
+            Console.WriteLine($"Date: {localTimeIn.ToString("MM/dd/yy")}"); // [cite: 22, 44]
+            Console.WriteLine($"Time: {localTimeIn.ToString("hh:mm:ss tt")}"); // [cite: 23, 45]
+
+            [cite_start]// Placeholder for demonstration: Simulating a Time-Out [cite: 24]
+            Console.WriteLine("\n--- Simulating Time-Out (9.5 hours later) ---");
+            DateTime localTimeOut = localTimeIn.AddHours(9.5); 
+
+            [cite_start]// Calculate results [cite: 27]
+            double totalHours = calculator.CalculateHours(localTimeIn, localTimeOut);
+            string hoursDetail;
+            string note = calculator.GetTimeNote(totalHours, out hoursDetail);
+
+            [cite_start]// Store in Dictionary 
+            employeeRecord["Employee Number"] = empNumber; // [cite: 18, 41]
+            employeeRecord["Employee Name"] = "John Doe"; // [cite: 19, 47]
+            employeeRecord["Office Location"] = location; // [cite: 20, 48]
+            employeeRecord["Time In"] = localTimeIn.ToString("MM/dd/yy hh:mm:ss tt"); // [cite: 21, 49]
+            employeeRecord["Time Out"] = localTimeOut.ToString("MM/dd/yy hh:mm:ss tt"); // [cite: 24, 25, 26]
+            employeeRecord["Total Hours"] = totalHours; // [cite: 27]
+            employeeRecord["Note"] = note; // [cite: 28]
+
+            // Final Output display
+            Console.WriteLine($"\nEmployee Log Summary:");
+            Console.WriteLine($"Name: {employeeRecord["Employee Name"]}");
+            Console.WriteLine($"Location: {employeeRecord["Office Location"]}");
+            Console.WriteLine($"Status: {note}");
+            Console.WriteLine(hoursDetail);
+        }
+    }
+}
